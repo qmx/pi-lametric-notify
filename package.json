@@ -4,7 +4,7 @@
   "description": "LaMetric Time notifications for pi when the agent finishes and waits for input",
   "repository": {
     "type": "git",
-    "url": "https://github.com/qmx/pi-lametric-notify"
+    "url": "git+https://github.com/qmx/pi-lametric-notify.git"
   },
   "type": "module",
   "main": "./extensions/lametric-notify.ts",
