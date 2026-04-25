@@ -23,7 +23,7 @@ export LAMETRIC_TIME_API_KEY=your-api-key
 - a full base URL like `http://192.168.1.100:8080`
 
 If either variable is missing, the extension does nothing.
-If LaMetric is unreachable or the request fails, the extension stays silent and does not crash pi.
+If LaMetric is unreachable, the IP is wrong, or the request fails, the extension stays silent, times out quickly, and does not block or crash pi.
 
 ## Install
 

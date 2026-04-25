@@ -29,12 +29,13 @@ function didAgentRunFail(messages: any[]): boolean {
 	});
 }
 
-async function getTmuxWindow(pi: ExtensionAPI): Promise<string | undefined> {
+async function getTmuxWindow(pi: ExtensionAPI, signal: AbortSignal): Promise<string | undefined> {
 	if (!process.env.TMUX && !process.env.TMUX_PANE) return undefined;
 
 	try {
 		const result = await pi.exec("tmux", ["display-message", "-p", TMUX_FORMAT], {
 			timeout: 2000,
+			signal,
 		});
 		if (result.code !== 0) return undefined;
 		const tmuxWindow = result.stdout.trim();
@@ -62,9 +63,14 @@ function buildFrames(isError: boolean, tmuxWindow?: string): LaMetricFrame[] {
 	return frames;
 }
 
-async function sendNotification(host: string, apiKey: string, frames: LaMetricFrame[]): Promise<void> {
-	const controller = new AbortController();
+async function sendNotification(
+	host: string,
+	apiKey: string,
+	frames: LaMetricFrame[],
+	controller: AbortController,
+): Promise<void> {
 	const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+	timeout.unref?.();
 
 	try {
 		const response = await fetch(`${getLaMetricBaseUrl(host)}/api/v2/device/notifications`, {
@@ -91,18 +97,39 @@ async function sendNotification(host: string, apiKey: string, frames: LaMetricFr
 	}
 }
 
-export default function lametricNotifyExtension(pi: ExtensionAPI): void {
-	pi.on("agent_end", async (event) => {
-		const host = process.env.LAMETRIC_TIME_HOST;
-		const apiKey = process.env.LAMETRIC_TIME_API_KEY;
-		if (!host || !apiKey) return;
+async function notifyLaMetric(pi: ExtensionAPI, messages: any[], controller: AbortController): Promise<void> {
+	const host = process.env.LAMETRIC_TIME_HOST;
+	const apiKey = process.env.LAMETRIC_TIME_API_KEY;
+	if (!host || !apiKey) return;
 
-		try {
-			const tmuxWindow = await getTmuxWindow(pi);
-			const frames = buildFrames(didAgentRunFail(event.messages), tmuxWindow);
-			await sendNotification(host, apiKey, frames);
-		} catch {
+	const tmuxWindow = await getTmuxWindow(pi, controller.signal);
+	const frames = buildFrames(didAgentRunFail(messages), tmuxWindow);
+	await sendNotification(host, apiKey, frames, controller);
+}
+
+export default function lametricNotifyExtension(pi: ExtensionAPI): void {
+	const inFlightNotifications = new Set<AbortController>();
+
+	pi.on("agent_end", (event) => {
+		const task = async () => {
+			const controller = new AbortController();
+			inFlightNotifications.add(controller);
+			try {
+				await notifyLaMetric(pi, event.messages, controller);
+			} finally {
+				inFlightNotifications.delete(controller);
+			}
+		};
+
+		void task().catch(() => {
 			// Never let notification failures affect pi.
+		});
+	});
+
+	pi.on("session_shutdown", () => {
+		for (const controller of inFlightNotifications) {
+			controller.abort();
 		}
+		inFlightNotifications.clear();
 	});
 }
