@@ -1,0 +1,42 @@
+{
+  "name": "@qmxme/pi-lametric-notify",
+  "version": "0.1.0",
+  "description": "LaMetric Time notifications for pi when the agent finishes and waits for input",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qmx/pi-lametric-notify"
+  },
+  "type": "module",
+  "main": "./extensions/lametric-notify.ts",
+  "types": "./extensions/lametric-notify.ts",
+  "files": [
+    "extensions/lametric-notify.ts",
+    "README.md"
+  ],
+  "keywords": [
+    "pi",
+    "pi-package",
+    "extension",
+    "lametric",
+    "notifications"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions/lametric-notify.ts"
+    ]
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --noEmit --watch",
+    "prepublishOnly": "npm run typecheck"
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@mariozechner/pi-coding-agent": "^0.67.6",
+    "@types/node": "^22.15.20",
+    "typescript": "^5.8.3"
+  },
+  "license": "MIT"
+}
