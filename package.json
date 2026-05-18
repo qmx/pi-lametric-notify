@@ -1,6 +1,6 @@
 {
   "name": "@qmxme/pi-lametric-notify",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "LaMetric Time notifications for pi when the agent finishes and waits for input",
   "repository": {
     "type": "git",
