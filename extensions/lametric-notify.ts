@@ -25,7 +25,7 @@ function didAgentRunFail(messages: any[]): boolean {
 		if (!message || typeof message !== "object") return false;
 		if (message.role === "toolResult") return message.isError === true;
 		if (message.role === "assistant") {
-			return message.stopReason === "error" || message.stopReason === "aborted";
+			return message.stopReason === "error";
 		}
 		return false;
 	});
