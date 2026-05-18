@@ -21,14 +21,17 @@ function getLaMetricBaseUrl(host: string): string {
 }
 
 function didAgentRunFail(messages: any[]): boolean {
-	return messages.some((message) => {
-		if (!message || typeof message !== "object") return false;
-		if (message.role === "toolResult") return message.isError === true;
+	// Check the last assistant message's stopReason — if the agent
+	// completed normally (even after recovering from tool errors),
+	// the run succeeded.
+	for (let i = messages.length - 1; i >= 0; i--) {
+		const message = messages[i];
+		if (!message || typeof message !== "object") continue;
 		if (message.role === "assistant") {
 			return message.stopReason === "error";
 		}
-		return false;
-	});
+	}
+	return false;
 }
 
 async function getTmuxWindow(pi: ExtensionAPI, signal: AbortSignal): Promise<string | undefined> {
