@@ -16,6 +16,9 @@ Set these environment variables before starting pi:
 ```bash
 export LAMETRIC_TIME_HOST=192.168.1.100
 export LAMETRIC_TIME_API_KEY=your-api-key
+
+# Optional: enable sound (knock-knock for success, negative1 for error)
+export LAMETRIC_TIME_SOUND=1
 ```
 
 `LAMETRIC_TIME_HOST` can be either:

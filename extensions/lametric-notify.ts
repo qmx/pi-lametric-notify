@@ -3,6 +3,8 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
 const SUCCESS_ICON = "a8813";
 const ERROR_ICON = "a423";
+const SUCCESS_SOUND = "knock-knock";
+const ERROR_SOUND = "negative1";
 const DEFAULT_TIMEOUT_MS = 3000;
 const NOTIFICATION_CYCLES = 3;
 const TMUX_FORMAT = "#S:#I.#P";
@@ -67,6 +69,7 @@ async function sendNotification(
 	host: string,
 	apiKey: string,
 	frames: LaMetricFrame[],
+	isError: boolean,
 	controller: AbortController,
 ): Promise<void> {
 	const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
@@ -86,6 +89,15 @@ async function sendNotification(
 				model: {
 					frames,
 					cycles: NOTIFICATION_CYCLES,
+					...(process.env.LAMETRIC_TIME_SOUND
+						? {
+								sound: {
+									category: "notifications",
+									id: isError ? ERROR_SOUND : SUCCESS_SOUND,
+									repeat: 1,
+								},
+							}
+						: {}),
 				},
 			}),
 			signal: controller.signal,
@@ -103,8 +115,9 @@ async function notifyLaMetric(pi: ExtensionAPI, messages: any[], controller: Abo
 	if (!host || !apiKey) return;
 
 	const tmuxWindow = await getTmuxWindow(pi, controller.signal);
-	const frames = buildFrames(didAgentRunFail(messages), tmuxWindow);
-	await sendNotification(host, apiKey, frames, controller);
+	const isError = didAgentRunFail(messages);
+	const frames = buildFrames(isError, tmuxWindow);
+	await sendNotification(host, apiKey, frames, isError, controller);
 }
 
 export default function lametricNotifyExtension(pi: ExtensionAPI): void {
